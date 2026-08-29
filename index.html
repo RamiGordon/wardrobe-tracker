@@ -304,6 +304,26 @@
   }
   .item-delete:active{ background: var(--danger); color: #fff; }
 
+  .item-edit{
+    position: absolute;
+    top: 6px;
+    right: 34px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(38,36,31,0.06);
+    border: none;
+    color: var(--ink-soft2);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index: 2;
+  }
+  .item-edit:active{ background: var(--navy); color: #fff; }
+
   /* ---------- Empty state ---------- */
   .empty{
     text-align:center;
@@ -525,7 +545,7 @@
     transform: translateX(-50%) translateY(20px);
     background: var(--ink);
     color: #EFE9DA;
-    padding: 10px 18px;
+    padding: 10px 10px 10px 18px;
     border-radius: 999px;
     font-size: 13px;
     font-weight: 500;
@@ -534,8 +554,25 @@
     z-index: 50;
     pointer-events: none;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 92vw;
   }
-  .toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  .toast-undo{
+    background: rgba(255,255,255,0.14);
+    border: none;
+    color: var(--tan);
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .toast-undo:active{ background: rgba(255,255,255,0.28); }
 </style>
 </head>
 <body>
@@ -569,8 +606,8 @@
 <div class="sheet-backdrop" id="backdrop">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <h2>Nueva prenda</h2>
-    <p class="sheet-sub">La agregás a la wishlist. El precio real lo cargás cuando la compres.</p>
+    <h2 id="sheetTitle">Nueva prenda</h2>
+    <p class="sheet-sub" id="sheetSub">La agregás a la wishlist. El precio real lo cargás cuando la compres.</p>
 
     <div class="field">
       <label>Foto</label>
@@ -656,6 +693,7 @@ let activeCategoryTab = "Todas";
 let activeStatusTab = "Todas";
 let pendingPhoto = null;
 let buyingItemId = null;
+let editingItemId = null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -669,6 +707,19 @@ function toast(msg){
   t.classList.add("show");
   clearTimeout(toast._timer);
   toast._timer = setTimeout(()=> t.classList.remove("show"), 1800);
+}
+
+function toastUndo(msg, onUndo){
+  const t = $("toast");
+  t.innerHTML = `<span>${escapeHtml(msg)}</span><button class="toast-undo" id="toastUndoBtn">Deshacer</button>`;
+  t.classList.add("show");
+  clearTimeout(toast._timer);
+  $("toastUndoBtn").onclick = ()=>{
+    clearTimeout(toast._timer);
+    t.classList.remove("show");
+    onUndo();
+  };
+  toast._timer = setTimeout(()=> t.classList.remove("show"), 4000);
 }
 
 // ---------- storage (localStorage — standalone site) ----------
@@ -838,6 +889,8 @@ function renderCard(item){
     ? `<span class="bought-badge">✓ COMPRADA</span><span class="item-price mono">${fmtMoney(Number(item.price)||0)}</span>`
     : `<button class="buy-btn" data-id="${item.id}">Marcar comprada</button>${item.estPrice ? `<span class="est-price mono">est. ${fmtMoney(Number(item.estPrice))}</span>` : ''}`;
 
+  const editBtnHtml = item.status !== 'bought' ? `<button class="item-edit" data-id="${item.id}">✎</button>` : '';
+
   card.innerHTML = `
     ${photoHtml}
     <div class="item-divider"></div>
@@ -846,11 +899,14 @@ function renderCard(item){
       <div class="item-meta">${escapeHtml(item.brand || item.category)}</div>
       <div class="item-status-row">${statusHtml}</div>
     </div>
+    ${editBtnHtml}
     <button class="item-delete" data-id="${item.id}">✕</button>
   `;
   card.querySelector('.item-delete').onclick = ()=> deleteItem(item.id);
   const buyBtn = card.querySelector('.buy-btn');
   if(buyBtn) buyBtn.onclick = ()=> openBuySheet(item.id);
+  const editBtn = card.querySelector('.item-edit');
+  if(editBtn) editBtn.onclick = ()=> openSheet(item.id);
   if(item.status === 'bought'){
     card.querySelector('.item-status-row').onclick = ()=> openBuySheet(item.id);
     card.querySelector('.item-status-row').style.cursor = 'pointer';
@@ -864,29 +920,51 @@ function escapeHtml(str){
   return d.innerHTML;
 }
 
-async function deleteItem(id){
-  items = items.filter(i=>i.id !== id);
+function deleteItem(id){
+  const idx = items.findIndex(i=>i.id === id);
+  if(idx === -1) return;
+  const removed = items[idx];
+  items.splice(idx, 1);
   render();
   persistItems();
-  toast("Prenda eliminada");
+  toastUndo("Prenda eliminada", ()=>{
+    items.splice(Math.min(idx, items.length), 0, removed);
+    render();
+    persistItems();
+  });
 }
 
-// ---------- add sheet ----------
-function openSheet(){
+// ---------- add / edit sheet ----------
+function openSheet(itemId){
+  editingItemId = itemId || null;
+  const item = editingItemId ? items.find(i=>i.id === editingItemId) : null;
+
   $("backdrop").classList.add('open');
-  $("nameInput").value = "";
-  $("brandInput").value = "";
-  $("estPriceInput").value = "";
-  $("categorySelect").value = activeCategoryTab !== "Todas" ? activeCategoryTab : "Pantalones";
-  pendingPhoto = null;
-  $("photoPreview").style.display = "none";
-  $("photoPlaceholder").style.display = "flex";
-  $("photoBtnLabel").textContent = "Subir foto";
-  $("photoBtnLabel").classList.remove('has-photo');
+  $("sheetTitle").textContent = item ? "Editar prenda" : "Nueva prenda";
+  $("sheetSub").textContent = item ? "Modificá los datos de la prenda." : "La agregás a la wishlist. El precio real lo cargás cuando la compres.";
+  $("nameInput").value = item ? item.name : "";
+  $("brandInput").value = item ? (item.brand || "") : "";
+  $("estPriceInput").value = item && item.estPrice != null ? item.estPrice : "";
+  $("categorySelect").value = item ? item.category : (activeCategoryTab !== "Todas" ? activeCategoryTab : "Pantalones");
+  $("saveBtn").textContent = item ? "Guardar cambios" : "Agregar a wishlist";
+  pendingPhoto = item ? (item.photo || null) : null;
+  if(pendingPhoto){
+    $("photoPreview").src = pendingPhoto;
+    $("photoPreview").style.display = "block";
+    $("photoPlaceholder").style.display = "none";
+    $("photoBtnLabel").textContent = "Cambiar foto";
+    $("photoBtnLabel").classList.add('has-photo');
+  } else {
+    $("photoPreview").style.display = "none";
+    $("photoPlaceholder").style.display = "flex";
+    $("photoBtnLabel").textContent = "Subir foto";
+    $("photoBtnLabel").classList.remove('has-photo');
+  }
   validateForm();
 }
 function closeSheet(){
   $("backdrop").classList.remove('open');
+  editingItemId = null;
 }
 
 function validateForm(){
@@ -895,6 +973,23 @@ function validateForm(){
 }
 
 async function saveItem(){
+  if(editingItemId){
+    const item = items.find(i=>i.id === editingItemId);
+    if(item){
+      item.name = $("nameInput").value.trim();
+      item.category = $("categorySelect").value;
+      item.brand = $("brandInput").value.trim();
+      item.estPrice = $("estPriceInput").value ? parseFloat($("estPriceInput").value) : null;
+      item.photo = pendingPhoto;
+      activeCategoryTab = item.category;
+    }
+    closeSheet();
+    render();
+    toast("Cambios guardados ✓");
+    persistItems();
+    return;
+  }
+
   const item = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
     name: $("nameInput").value.trim(),
@@ -966,7 +1061,7 @@ async function unmarkBought(){
 }
 
 // ---------- events ----------
-$("addBtn").onclick = openSheet;
+$("addBtn").onclick = ()=> openSheet();
 $("cancelBtn").onclick = closeSheet;
 $("backdrop").onclick = (e)=>{ if(e.target === $("backdrop")) closeSheet(); };
 $("saveBtn").onclick = saveItem;
