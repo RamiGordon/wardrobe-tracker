@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Miami Wishlist">
+<meta name="theme-color" content="#2E3A52">
+<title>Miami — Tracker de compras</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --bg: #EBE6D9;
+    --surface: #FFFFFF;
+    --surface-alt: #F5F1E6;
+    --ink: #26241F;
+    --ink-soft: #6B675E;
+    --ink-soft2: #837C6C;
+    --line: #DCD5C2;
+    --navy: #2E3A52;
+    --navy-soft: #4A5773;
+    --tan: #C9A876;
+    --tan-deep: #A9834E;
+    --green: #4B6B4F;
+    --green-soft: #E4EBE1;
+    --danger: #A64B3B;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(38,36,31,0.06), 0 6px 20px -8px rgba(38,36,31,0.15);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono{ font-family: 'IBM Plex Mono', 'SF Mono', monospace; }
+
+  #app{
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Header / total ---------- */
+  header{
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--navy);
+    color: #EFE9DA;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(0,0,0,0.15);
+  }
+  .eyebrow{
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #A9B3C6;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+  .total-row{
+    display:flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .total-label{
+    font-size: 14px;
+    color: #C7CDDA;
+    font-weight: 500;
+  }
+  .total-value{
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .progress-pill{
+    font-size: 12px;
+    font-weight: 600;
+    color: #EFE9DA;
+    background: rgba(255,255,255,0.1);
+    padding: 6px 11px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .progress-pill .mono{ color: #C7CDDA; font-weight:500; }
+
+  /* ---------- Status filter ---------- */
+  .status-filter{
+    display:flex;
+    gap: 8px;
+    padding: 12px 16px 0;
+    background: var(--bg);
+  }
+  .status-tab{
+    flex:1;
+    text-align:center;
+    padding: 9px 6px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft2);
+    cursor:pointer;
+  }
+  .status-tab.active{ background: var(--ink); border-color: var(--ink); color: #fff; }
+  .status-tab .mono{ font-size: 11px; opacity:0.7; margin-left:3px; }
+
+  /* ---------- Category tabs ---------- */
+  .tabs{
+    display:flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px 16px 10px;
+    background: var(--bg);
+    position: sticky;
+    top: 96px;
+    z-index: 19;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{
+    flex: 0 0 auto;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft2);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all .15s ease;
+  }
+  .tab.active{
+    background: var(--navy);
+    border-color: var(--navy);
+    color: #fff;
+  }
+  .tab .count{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    opacity: 0.65;
+    margin-left: 4px;
+  }
+
+  /* ---------- List ---------- */
+  main{
+    flex: 1;
+    padding: 4px 16px 110px;
+  }
+
+  .category-heading{
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--ink-soft2);
+    margin: 20px 2px 10px;
+    display:flex;
+    justify-content: space-between;
+  }
+  .category-heading span.cat-total{
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--tan-deep);
+    letter-spacing: 0;
+    text-transform: none;
+    font-weight: 600;
+  }
+
+  .item-card{
+    position: relative;
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    margin-bottom: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(38,36,31,0.04);
+  }
+  .item-card.is-bought{ opacity: 0.72; }
+  .item-photo{
+    width: 84px;
+    height: 84px;
+    flex: 0 0 84px;
+    background: var(--surface-alt);
+    object-fit: cover;
+    display:block;
+  }
+  .item-photo.placeholder{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color: var(--line);
+    font-size: 26px;
+  }
+  .item-divider{
+    width: 0;
+    border-left: 1.5px dashed var(--line);
+    position: relative;
+    margin: 8px 0;
+  }
+  .item-divider::before, .item-divider::after{
+    content:'';
+    position:absolute;
+    left: -5px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--bg);
+  }
+  .item-divider::before{ top: -5px; }
+  .item-divider::after{ bottom: -5px; }
+
+  .item-info{
+    flex: 1;
+    padding: 10px 12px;
+    min-width: 0;
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+  }
+  .item-name{
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .item-meta{
+    font-size: 12px;
+    color: var(--ink-soft2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .item-status-row{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .item-price{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--green);
+  }
+  .bought-badge{
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--green);
+    background: var(--green-soft);
+    padding: 2px 7px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .buy-btn{
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--navy);
+    background: var(--surface-alt);
+    border: 1.5px solid var(--line);
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .buy-btn:active{ background: var(--navy); color:#fff; }
+  .est-price{
+    font-size: 11.5px;
+    color: var(--ink-soft2);
+  }
+
+  .item-delete{
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(38,36,31,0.06);
+    border: none;
+    color: var(--ink-soft2);
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index: 2;
+  }
+  .item-delete:active{ background: var(--danger); color: #fff; }
+
+  /* ---------- Empty state ---------- */
+  .empty{
+    text-align:center;
+    padding: 60px 24px 20px;
+    color: var(--ink-soft2);
+  }
+  .empty-tag{
+    width: 54px; height: 54px;
+    margin: 0 auto 16px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1.5px dashed var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 22px;
+    transform: rotate(-6deg);
+  }
+  .empty h3{
+    font-size: 15px;
+    color: var(--ink);
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+  .empty p{
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0;
+    max-width: 260px;
+    margin: 0 auto;
+  }
+
+  /* ---------- FAB ---------- */
+  .fab{
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 480px;
+    width: calc(100% - 32px);
+    z-index: 30;
+  }
+  .fab button{
+    width: 100%;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 15px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 8px 24px -6px rgba(46,58,82,0.5);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .fab button:active{ background: var(--navy-soft); }
+  .fab button svg{ width:18px; height:18px; }
+
+  /* ---------- Modal ---------- */
+  .sheet-backdrop{
+    position: fixed; inset: 0;
+    background: rgba(20,19,16,0.45);
+    z-index: 40;
+    display:none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .sheet-backdrop.open{ display:flex; }
+  .sheet{
+    background: var(--bg);
+    width: 100%;
+    max-width: 480px;
+    border-radius: 20px 20px 0 0;
+    padding: 8px 20px 26px;
+    max-height: 88vh;
+    overflow-y: auto;
+    animation: slideUp .22s ease;
+  }
+  @keyframes slideUp{ from{ transform: translateY(24px); opacity:0.4;} to{ transform: translateY(0); opacity:1;} }
+  .sheet-handle{
+    width: 36px; height: 4px;
+    background: var(--line);
+    border-radius: 4px;
+    margin: 10px auto 14px;
+  }
+  .sheet h2{
+    font-size: 17px;
+    margin: 0 0 4px;
+    font-weight: 700;
+  }
+  .sheet .sheet-sub{
+    font-size: 12.5px;
+    color: var(--ink-soft2);
+    margin: 0 0 18px;
+  }
+  .field{ margin-bottom: 14px; }
+  .field label{
+    display:block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft2);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .field input[type=text], .field input[type=number], .field select{
+    width: 100%;
+    padding: 12px 13px;
+    border-radius: 10px;
+    border: 1.5px solid var(--line);
+    background: var(--surface);
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    appearance: none;
+  }
+  .field input:focus, .field select:focus{
+    outline: none;
+    border-color: var(--navy);
+  }
+  .price-input-wrap{ position: relative; }
+  .price-input-wrap span{
+    position:absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    color: var(--ink-soft2); font-family:'IBM Plex Mono',monospace; font-size:15px;
+  }
+  .price-input-wrap input{ padding-left: 28px !important; font-family:'IBM Plex Mono',monospace; }
+
+  .photo-picker{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+  }
+  .photo-preview{
+    width: 64px; height: 64px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1.5px dashed var(--line);
+    object-fit: cover;
+    flex: 0 0 64px;
+  }
+  .photo-btn{
+    flex:1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1.5px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-soft2);
+    font-size: 13.5px;
+    font-weight: 500;
+    text-align:center;
+    cursor:pointer;
+  }
+  .photo-btn.has-photo{ color: var(--navy); border-color: var(--navy); font-weight:600; }
+  #photoInput{
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .sheet-actions{
+    display:flex;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .btn-cancel, .btn-save{
+    flex:1;
+    padding: 13px;
+    border-radius: 11px;
+    font-size: 14.5px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .btn-cancel{ background: var(--surface); color: var(--ink-soft2); border:1.5px solid var(--line); }
+  .btn-save{ background: var(--navy); color: #fff; }
+  .btn-save.green{ background: var(--green); }
+  .btn-save:disabled{ background: var(--line); color: var(--ink-soft2); }
+  .btn-unmark{
+    width:100%;
+    margin-top: 10px;
+    background: none;
+    border: none;
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px;
+    cursor: pointer;
+  }
+
+  .buy-card-preview{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 18px;
+  }
+  .buy-card-preview img, .buy-card-preview .ph{
+    width: 48px; height:48px; border-radius:8px; object-fit:cover; flex:0 0 48px;
+    background: var(--surface-alt);
+    display:flex; align-items:center; justify-content:center; color:var(--line);
+  }
+  .buy-card-preview .bcp-name{ font-size:14px; font-weight:600; }
+  .buy-card-preview .bcp-cat{ font-size:11.5px; color:var(--ink-soft2); }
+
+  .toast{
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: #EFE9DA;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all .25s ease;
+    z-index: 50;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show{ opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <p class="eyebrow">Miami · Wishlist</p>
+    <div class="total-row">
+      <div>
+        <div class="total-label">Total gastado</div>
+        <div class="total-value mono" id="totalValue">$0</div>
+      </div>
+      <div class="progress-pill" id="progressPill">0<span class="mono">/0</span> compradas</div>
+    </div>
+  </header>
+
+  <div class="status-filter" id="statusFilter"></div>
+  <div class="tabs" id="tabs"></div>
+
+  <main id="main"></main>
+
+  <div class="fab">
+    <button id="addBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Agregar a la wishlist
+    </button>
+  </div>
+</div>
+
+<!-- Add item sheet -->
+<div class="sheet-backdrop" id="backdrop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>Nueva prenda</h2>
+    <p class="sheet-sub">La agregás a la wishlist. El precio real lo cargás cuando la compres.</p>
+
+    <div class="field">
+      <label>Foto</label>
+      <label class="photo-picker" for="photoInput">
+        <img id="photoPreview" class="photo-preview" style="display:none;">
+        <div id="photoPlaceholder" class="photo-preview" style="display:flex;align-items:center;justify-content:center;color:var(--line);font-size:22px;">＋</div>
+        <div class="photo-btn" id="photoBtnLabel">Subir foto</div>
+        <input type="file" accept="image/*" id="photoInput">
+      </label>
+    </div>
+
+    <div class="field">
+      <label>Prenda</label>
+      <input type="text" id="nameInput" placeholder="Ej: Pantalón sastrero negro">
+    </div>
+
+    <div class="field">
+      <label>Categoría</label>
+      <select id="categorySelect">
+        <option value="Pantalones">Pantalones</option>
+        <option value="Remeras">Remeras</option>
+        <option value="Sweaters y camisas">Sweaters y camisas</option>
+        <option value="Camperas y abrigos">Camperas y abrigos</option>
+        <option value="Calzado">Calzado</option>
+        <option value="Accesorios">Accesorios</option>
+        <option value="Otros">Otros</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Marca / tienda (opcional)</label>
+      <input type="text" id="brandInput" placeholder="Ej: Abercrombie & Fitch">
+    </div>
+
+    <div class="field">
+      <label>Precio estimado (opcional)</label>
+      <div class="price-input-wrap">
+        <span>$</span>
+        <input type="number" id="estPriceInput" placeholder="0" inputmode="decimal" step="0.01" min="0">
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn-cancel" id="cancelBtn">Cancelar</button>
+      <button class="btn-save" id="saveBtn" disabled>Agregar a wishlist</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mark as bought sheet -->
+<div class="sheet-backdrop" id="buyBackdrop">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="buySheetTitle">Marcar como comprada</h2>
+    <p class="sheet-sub">Cargá lo que pagaste realmente.</p>
+
+    <div class="buy-card-preview" id="buyCardPreview"></div>
+
+    <div class="field">
+      <label>Precio pagado</label>
+      <div class="price-input-wrap">
+        <span>$</span>
+        <input type="number" id="buyPriceInput" placeholder="0" inputmode="decimal" step="0.01" min="0">
+      </div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn-cancel" id="buyCancelBtn">Cancelar</button>
+      <button class="btn-save green" id="buyConfirmBtn" disabled>Confirmar compra</button>
+    </div>
+    <button class="btn-unmark" id="unmarkBtn" style="display:none;">Desmarcar como comprada</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATEGORIES = ["Pantalones","Remeras","Sweaters y camisas","Camperas y abrigos","Calzado","Accesorios","Otros"];
+const STORAGE_KEY = "wardrobe-items";
+
+let items = [];
+let activeCategoryTab = "Todas";
+let activeStatusTab = "Todas";
+let pendingPhoto = null;
+let buyingItemId = null;
+
+const $ = (id) => document.getElementById(id);
+
+function fmtMoney(n){
+  return "$" + n.toLocaleString('en-US', {minimumFractionDigits: n % 1 === 0 ? 0 : 2, maximumFractionDigits: 2});
+}
+
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(()=> t.classList.remove("show"), 1800);
+}
+
+// ---------- storage (localStorage — standalone site) ----------
+function loadItems(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    items = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    items = [];
+  }
+  render();
+}
+
+function persistItems(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }catch(e){
+    toast("No se pudo guardar (¿memoria llena?)");
+  }
+}
+
+// ---------- image compression ----------
+function compressImage(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const maxW = 480;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.6));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ---------- rendering ----------
+function render(){
+  renderHeader();
+  renderStatusFilter();
+  renderTabs();
+  renderList();
+}
+
+function renderHeader(){
+  const bought = items.filter(i=> i.status === 'bought');
+  const total = bought.reduce((s,i)=> s + (Number(i.price)||0), 0);
+  $("totalValue").innerHTML = fmtMoney(total);
+  $("progressPill").innerHTML = `${bought.length}<span class="mono">/${items.length}</span> compradas`;
+}
+
+function renderStatusFilter(){
+  const wrap = $("statusFilter");
+  const pending = items.filter(i=>i.status!=='bought').length;
+  const bought = items.filter(i=>i.status==='bought').length;
+  const opts = [
+    ["Todas", items.length],
+    ["Pendientes", pending],
+    ["Compradas", bought],
+  ];
+  wrap.innerHTML = "";
+  opts.forEach(([label, count])=>{
+    const el = document.createElement('div');
+    el.className = 'status-tab' + (activeStatusTab === label ? ' active' : '');
+    el.innerHTML = `${label} <span class="mono">${count}</span>`;
+    el.onclick = ()=>{ activeStatusTab = label; render(); };
+    wrap.appendChild(el);
+  });
+}
+
+function renderTabs(){
+  const wrap = $("tabs");
+  wrap.innerHTML = "";
+  const pool = statusFiltered(items);
+  const counts = { "Todas": pool.length };
+  CATEGORIES.forEach(c=> counts[c] = pool.filter(i=>i.category===c).length);
+
+  const allTabs = ["Todas", ...CATEGORIES.filter(c=> counts[c] > 0 || c === activeCategoryTab)];
+  if(!allTabs.includes(activeCategoryTab)) activeCategoryTab = "Todas";
+
+  allTabs.forEach(cat=>{
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (cat === activeCategoryTab ? ' active' : '');
+    btn.innerHTML = `${cat} <span class="count mono">${counts[cat] ?? 0}</span>`;
+    btn.onclick = ()=>{ activeCategoryTab = cat; render(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function statusFiltered(list){
+  if(activeStatusTab === 'Pendientes') return list.filter(i=>i.status!=='bought');
+  if(activeStatusTab === 'Compradas') return list.filter(i=>i.status==='bought');
+  return list;
+}
+
+function renderList(){
+  const main = $("main");
+  main.innerHTML = "";
+
+  let pool = statusFiltered(items);
+  const filtered = activeCategoryTab === "Todas" ? pool : pool.filter(i=>i.category===activeCategoryTab);
+
+  if(items.length === 0){
+    main.innerHTML = `
+      <div class="empty">
+        <div class="empty-tag">🏷️</div>
+        <h3>Armá tu wishlist</h3>
+        <p>Cargá las prendas que querés comprar con su foto. Cuando estés en Miami, las vas marcando como compradas.</p>
+      </div>`;
+    return;
+  }
+
+  if(filtered.length === 0){
+    main.innerHTML = `
+      <div class="empty">
+        <div class="empty-tag">✓</div>
+        <h3>Nada acá</h3>
+        <p>No hay prendas en este filtro todavía.</p>
+      </div>`;
+    return;
+  }
+
+  if(activeCategoryTab === "Todas"){
+    CATEGORIES.forEach(cat=>{
+      const catItems = filtered.filter(i=>i.category===cat);
+      if(catItems.length===0) return;
+      renderCategoryBlock(main, cat, catItems);
+    });
+    const other = filtered.filter(i=> !CATEGORIES.includes(i.category));
+    if(other.length) renderCategoryBlock(main, "Otros", other);
+  } else {
+    renderCategoryBlock(main, null, filtered);
+  }
+}
+
+function renderCategoryBlock(main, cat, catItems){
+  if(cat){
+    const sum = catItems.filter(i=>i.status==='bought').reduce((s,i)=> s + (Number(i.price)||0), 0);
+    const h = document.createElement('div');
+    h.className = 'category-heading';
+    h.innerHTML = `<span>${cat}</span>${sum>0 ? `<span class="cat-total mono">${fmtMoney(sum)}</span>` : ''}`;
+    main.appendChild(h);
+  }
+  catItems.slice().reverse().forEach(item=>{
+    main.appendChild(renderCard(item));
+  });
+}
+
+function renderCard(item){
+  const card = document.createElement('div');
+  card.className = 'item-card' + (item.status === 'bought' ? ' is-bought' : '');
+
+  const photoHtml = item.photo
+    ? `<img class="item-photo" src="${item.photo}">`
+    : `<div class="item-photo placeholder">🏷️</div>`;
+
+  const statusHtml = item.status === 'bought'
+    ? `<span class="bought-badge">✓ COMPRADA</span><span class="item-price mono">${fmtMoney(Number(item.price)||0)}</span>`
+    : `<button class="buy-btn" data-id="${item.id}">Marcar comprada</button>${item.estPrice ? `<span class="est-price mono">est. ${fmtMoney(Number(item.estPrice))}</span>` : ''}`;
+
+  card.innerHTML = `
+    ${photoHtml}
+    <div class="item-divider"></div>
+    <div class="item-info">
+      <div class="item-name">${escapeHtml(item.name || "Sin nombre")}</div>
+      <div class="item-meta">${escapeHtml(item.brand || item.category)}</div>
+      <div class="item-status-row">${statusHtml}</div>
+    </div>
+    <button class="item-delete" data-id="${item.id}">✕</button>
+  `;
+  card.querySelector('.item-delete').onclick = ()=> deleteItem(item.id);
+  const buyBtn = card.querySelector('.buy-btn');
+  if(buyBtn) buyBtn.onclick = ()=> openBuySheet(item.id);
+  if(item.status === 'bought'){
+    card.querySelector('.item-status-row').onclick = ()=> openBuySheet(item.id);
+    card.querySelector('.item-status-row').style.cursor = 'pointer';
+  }
+  return card;
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+async function deleteItem(id){
+  items = items.filter(i=>i.id !== id);
+  render();
+  persistItems();
+  toast("Prenda eliminada");
+}
+
+// ---------- add sheet ----------
+function openSheet(){
+  $("backdrop").classList.add('open');
+  $("nameInput").value = "";
+  $("brandInput").value = "";
+  $("estPriceInput").value = "";
+  $("categorySelect").value = activeCategoryTab !== "Todas" ? activeCategoryTab : "Pantalones";
+  pendingPhoto = null;
+  $("photoPreview").style.display = "none";
+  $("photoPlaceholder").style.display = "flex";
+  $("photoBtnLabel").textContent = "Subir foto";
+  $("photoBtnLabel").classList.remove('has-photo');
+  validateForm();
+}
+function closeSheet(){
+  $("backdrop").classList.remove('open');
+}
+
+function validateForm(){
+  const ok = $("nameInput").value.trim().length > 0;
+  $("saveBtn").disabled = !ok;
+}
+
+async function saveItem(){
+  const item = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    name: $("nameInput").value.trim(),
+    category: $("categorySelect").value,
+    brand: $("brandInput").value.trim(),
+    estPrice: $("estPriceInput").value ? parseFloat($("estPriceInput").value) : null,
+    price: null,
+    status: 'pending',
+    photo: pendingPhoto,
+    createdAt: Date.now()
+  };
+  items.push(item);
+  activeCategoryTab = item.category;
+  activeStatusTab = "Todas";
+  closeSheet();
+  render();
+  toast("Agregada a la wishlist ✓");
+  persistItems();
+}
+
+// ---------- buy sheet ----------
+function openBuySheet(id){
+  const item = items.find(i=>i.id===id);
+  if(!item) return;
+  buyingItemId = id;
+  $("buyBackdrop").classList.add('open');
+  $("buySheetTitle").textContent = item.status === 'bought' ? 'Editar compra' : 'Marcar como comprada';
+  $("buyPriceInput").value = item.price != null ? item.price : (item.estPrice || "");
+  $("unmarkBtn").style.display = item.status === 'bought' ? 'block' : 'none';
+
+  const preview = $("buyCardPreview");
+  preview.innerHTML = `
+    ${item.photo ? `<img src="${item.photo}">` : `<div class="ph">🏷️</div>`}
+    <div>
+      <div class="bcp-name">${escapeHtml(item.name)}</div>
+      <div class="bcp-cat">${escapeHtml(item.category)}</div>
+    </div>
+  `;
+  validateBuyForm();
+}
+function closeBuySheet(){
+  $("buyBackdrop").classList.remove('open');
+  buyingItemId = null;
+}
+function validateBuyForm(){
+  $("buyConfirmBtn").disabled = $("buyPriceInput").value === "";
+}
+
+async function confirmBuy(){
+  const item = items.find(i=>i.id===buyingItemId);
+  if(!item) return;
+  item.price = parseFloat($("buyPriceInput").value) || 0;
+  item.status = 'bought';
+  closeBuySheet();
+  render();
+  toast("Compra confirmada ✓");
+  persistItems();
+}
+
+async function unmarkBought(){
+  const item = items.find(i=>i.id===buyingItemId);
+  if(!item) return;
+  item.status = 'pending';
+  item.price = null;
+  closeBuySheet();
+  render();
+  toast("Desmarcada");
+  persistItems();
+}
+
+// ---------- events ----------
+$("addBtn").onclick = openSheet;
+$("cancelBtn").onclick = closeSheet;
+$("backdrop").onclick = (e)=>{ if(e.target === $("backdrop")) closeSheet(); };
+$("saveBtn").onclick = saveItem;
+$("nameInput").addEventListener('input', validateForm);
+
+$("buyCancelBtn").onclick = closeBuySheet;
+$("buyBackdrop").onclick = (e)=>{ if(e.target === $("buyBackdrop")) closeBuySheet(); };
+$("buyConfirmBtn").onclick = confirmBuy;
+$("buyPriceInput").addEventListener('input', validateBuyForm);
+$("unmarkBtn").onclick = unmarkBought;
+
+$("photoInput").addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const dataUrl = await compressImage(file);
+    pendingPhoto = dataUrl;
+    $("photoPreview").src = dataUrl;
+    $("photoPreview").style.display = "block";
+    $("photoPlaceholder").style.display = "none";
+    $("photoBtnLabel").textContent = "Cambiar foto";
+    $("photoBtnLabel").classList.add('has-photo');
+  }catch(err){
+    toast("No se pudo procesar la foto");
+  }
+});
+
+loadItems();
+</script>
+</body>
+</html>
