@@ -206,6 +206,7 @@
     color: var(--line);
     font-size: 26px;
   }
+  .item-photo[src]{ cursor: pointer; }
   .item-divider{
     width: 0;
     border-left: 1.5px dashed var(--line);
@@ -303,26 +304,7 @@
     z-index: 2;
   }
   .item-delete:active{ background: var(--danger); color: #fff; }
-
-  .item-edit{
-    position: absolute;
-    top: 6px;
-    right: 34px;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: rgba(38,36,31,0.06);
-    border: none;
-    color: var(--ink-soft2);
-    font-size: 12px;
-    line-height: 1;
-    cursor: pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index: 2;
-  }
-  .item-edit:active{ background: var(--navy); color: #fff; }
+  .item-card.is-editable{ cursor: pointer; }
 
   /* ---------- Empty state ---------- */
   .empty{
@@ -456,29 +438,16 @@
   .photo-picker{
     display:flex;
     align-items:center;
-    gap: 12px;
   }
   .photo-preview{
-    width: 64px; height: 64px;
-    border-radius: 10px;
+    width: 84px; height: 84px;
+    border-radius: 12px;
     background: var(--surface);
     border: 1.5px dashed var(--line);
     object-fit: cover;
-    flex: 0 0 64px;
+    flex: 0 0 84px;
+    cursor: pointer;
   }
-  .photo-btn{
-    flex:1;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1.5px solid var(--line);
-    background: var(--surface);
-    color: var(--ink-soft2);
-    font-size: 13.5px;
-    font-weight: 500;
-    text-align:center;
-    cursor:pointer;
-  }
-  .photo-btn.has-photo{ color: var(--navy); border-color: var(--navy); font-weight:600; }
   #photoInput{
     position: absolute;
     width: 1px; height: 1px;
@@ -573,6 +542,43 @@
     white-space: nowrap;
   }
   .toast-undo:active{ background: rgba(255,255,255,0.28); }
+
+  /* ---------- Photo lightbox ---------- */
+  .photo-lightbox{
+    position: fixed;
+    inset: 0;
+    background: rgba(20,19,16,0.92);
+    z-index: 60;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+  }
+  .photo-lightbox.open{ display: flex; }
+  .photo-lightbox img{
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px -12px rgba(0,0,0,0.5);
+  }
+  .photo-lightbox-close{
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+  .photo-lightbox-close:active{ background: rgba(255,255,255,0.25); }
 </style>
 </head>
 <body>
@@ -613,8 +619,7 @@
       <label>Foto</label>
       <label class="photo-picker" for="photoInput">
         <img id="photoPreview" class="photo-preview" style="display:none;">
-        <div id="photoPlaceholder" class="photo-preview" style="display:flex;align-items:center;justify-content:center;color:var(--line);font-size:22px;">＋</div>
-        <div class="photo-btn" id="photoBtnLabel">Subir foto</div>
+        <div id="photoPlaceholder" class="photo-preview" style="display:flex;align-items:center;justify-content:center;color:var(--line);font-size:26px;">＋</div>
         <input type="file" accept="image/*" id="photoInput">
       </label>
     </div>
@@ -683,6 +688,11 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="photo-lightbox" id="photoLightbox">
+  <button class="photo-lightbox-close" id="photoLightboxClose">✕</button>
+  <img id="photoLightboxImg" src="" alt="">
+</div>
 
 <script>
 const CATEGORIES = ["Pantalones","Remeras","Sweaters y camisas","Camperas y abrigos","Calzado","Accesorios","Otros"];
@@ -889,8 +899,6 @@ function renderCard(item){
     ? `<span class="bought-badge">✓ COMPRADA</span><span class="item-price mono">${fmtMoney(Number(item.price)||0)}</span>`
     : `<button class="buy-btn" data-id="${item.id}">Marcar comprada</button>${item.estPrice ? `<span class="est-price mono">est. ${fmtMoney(Number(item.estPrice))}</span>` : ''}`;
 
-  const editBtnHtml = item.status !== 'bought' ? `<button class="item-edit" data-id="${item.id}">✎</button>` : '';
-
   card.innerHTML = `
     ${photoHtml}
     <div class="item-divider"></div>
@@ -899,19 +907,31 @@ function renderCard(item){
       <div class="item-meta">${escapeHtml(item.brand || item.category)}</div>
       <div class="item-status-row">${statusHtml}</div>
     </div>
-    ${editBtnHtml}
     <button class="item-delete" data-id="${item.id}">✕</button>
   `;
-  card.querySelector('.item-delete').onclick = ()=> deleteItem(item.id);
+  card.querySelector('.item-delete').onclick = (e)=>{ e.stopPropagation(); deleteItem(item.id); };
   const buyBtn = card.querySelector('.buy-btn');
-  if(buyBtn) buyBtn.onclick = ()=> openBuySheet(item.id);
-  const editBtn = card.querySelector('.item-edit');
-  if(editBtn) editBtn.onclick = ()=> openSheet(item.id);
+  if(buyBtn) buyBtn.onclick = (e)=>{ e.stopPropagation(); openBuySheet(item.id); };
+  if(item.photo){
+    card.querySelector('.item-photo').onclick = (e)=>{ e.stopPropagation(); openPhotoLightbox(item.photo, item.name); };
+  }
   if(item.status === 'bought'){
-    card.querySelector('.item-status-row').onclick = ()=> openBuySheet(item.id);
+    card.querySelector('.item-status-row').onclick = (e)=>{ e.stopPropagation(); openBuySheet(item.id); };
     card.querySelector('.item-status-row').style.cursor = 'pointer';
+  } else {
+    card.classList.add('is-editable');
+    card.onclick = ()=> openSheet(item.id);
   }
   return card;
+}
+
+function openPhotoLightbox(src, alt){
+  $("photoLightboxImg").src = src;
+  $("photoLightboxImg").alt = alt || "";
+  $("photoLightbox").classList.add('open');
+}
+function closePhotoLightbox(){
+  $("photoLightbox").classList.remove('open');
 }
 
 function escapeHtml(str){
@@ -952,13 +972,9 @@ function openSheet(itemId){
     $("photoPreview").src = pendingPhoto;
     $("photoPreview").style.display = "block";
     $("photoPlaceholder").style.display = "none";
-    $("photoBtnLabel").textContent = "Cambiar foto";
-    $("photoBtnLabel").classList.add('has-photo');
   } else {
     $("photoPreview").style.display = "none";
     $("photoPlaceholder").style.display = "flex";
-    $("photoBtnLabel").textContent = "Subir foto";
-    $("photoBtnLabel").classList.remove('has-photo');
   }
   validateForm();
 }
@@ -1073,6 +1089,9 @@ $("buyConfirmBtn").onclick = confirmBuy;
 $("buyPriceInput").addEventListener('input', validateBuyForm);
 $("unmarkBtn").onclick = unmarkBought;
 
+$("photoLightboxClose").onclick = closePhotoLightbox;
+$("photoLightbox").onclick = (e)=>{ if(e.target === $("photoLightbox")) closePhotoLightbox(); };
+
 $("photoInput").addEventListener('change', async (e)=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -1082,8 +1101,6 @@ $("photoInput").addEventListener('change', async (e)=>{
     $("photoPreview").src = dataUrl;
     $("photoPreview").style.display = "block";
     $("photoPlaceholder").style.display = "none";
-    $("photoBtnLabel").textContent = "Cambiar foto";
-    $("photoBtnLabel").classList.add('has-photo');
   }catch(err){
     toast("No se pudo procesar la foto");
   }
