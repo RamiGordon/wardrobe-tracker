@@ -15,7 +15,16 @@ import { BuySheet } from "./BuySheet";
 import { PhotoLightbox } from "./PhotoLightbox";
 import { Toast, type ToastData } from "./Toast";
 
-export function WardrobeApp({ initialItems }: { initialItems: Item[] }) {
+interface WardrobeAppProps {
+  initialItems: Item[];
+  user: {
+    name: string | null | undefined;
+    email: string | null | undefined;
+    image: string | null | undefined;
+  };
+}
+
+export function WardrobeApp({ initialItems, user }: WardrobeAppProps) {
   const {
     items,
     addItem,
@@ -147,7 +156,7 @@ export function WardrobeApp({ initialItems }: { initialItems: Item[] }) {
 
   return (
     <>
-      <Header total={total} boughtCount={bought.length} itemCount={items.length} />
+      <Header total={total} boughtCount={bought.length} itemCount={items.length} user={user} />
 
       <StatusFilter
         active={activeStatusTab}

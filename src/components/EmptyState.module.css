@@ -7,7 +7,7 @@
   width: 54px;
   height: 54px;
   margin: 0 auto 16px;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--surface);
   border: 1.5px dashed var(--line);
   display: flex;
@@ -17,10 +17,11 @@
   transform: rotate(-6deg);
 }
 .empty h3 {
-  font-size: 15px;
+  font-family: var(--font-display);
+  font-size: 16px;
   color: var(--ink);
   margin: 0 0 6px;
-  font-weight: 600;
+  font-weight: 700;
 }
 .empty p {
   font-size: 13px;

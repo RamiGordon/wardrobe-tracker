@@ -1,23 +1,23 @@
 import { fmtMoney } from "@/lib/money";
-import { signOutAction } from "@/actions/auth";
+import { UserAvatar } from "./UserAvatar";
 import styles from "./Header.module.css";
 
 interface HeaderProps {
   total: number;
   boughtCount: number;
   itemCount: number;
+  user: {
+    name: string | null | undefined;
+    email: string | null | undefined;
+    image: string | null | undefined;
+  };
 }
 
-export function Header({ total, boughtCount, itemCount }: HeaderProps) {
+export function Header({ total, boughtCount, itemCount, user }: HeaderProps) {
   return (
     <header className={styles.header}>
-      <div className={styles.eyebrowRow}>
-        <p className={styles.eyebrow}>Miami · Wishlist</p>
-        <form action={signOutAction}>
-          <button className={styles.signOut} type="submit">
-            Salir
-          </button>
-        </form>
+      <div className={styles.avatarSlot}>
+        <UserAvatar name={user.name} email={user.email} image={user.image} />
       </div>
       <div className={styles.totalRow}>
         <div>

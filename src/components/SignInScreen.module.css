@@ -11,7 +11,7 @@
 .tag {
   width: 54px;
   height: 54px;
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--surface);
   border: 1.5px dashed var(--line);
   display: flex;
@@ -21,7 +21,8 @@
   transform: rotate(-6deg);
 }
 .title {
-  font-size: 20px;
+  font-family: var(--font-display);
+  font-size: 21px;
   font-weight: 700;
   color: var(--ink);
   margin: 0;
@@ -40,17 +41,21 @@
   gap: 10px;
   background: var(--navy);
   color: #fff;
-  border: none;
-  border-radius: 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
   padding: 14px 22px;
-  font-size: 15px;
-  font-weight: 600;
-  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-family: var(--font-display);
   cursor: pointer;
-  box-shadow: 0 8px 24px -6px rgba(46, 58, 82, 0.5);
+  box-shadow: var(--stamp-shadow);
 }
 .button:active {
   background: var(--navy-soft);
+  box-shadow: 1px 1px 0 rgba(38, 36, 31, 0.9);
+  transform: translate(2px, 2px);
 }
 .button svg {
   width: 18px;

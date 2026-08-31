@@ -18,7 +18,14 @@ export default async function Page() {
 
   return (
     <div id="app">
-      <WardrobeApp initialItems={items} />
+      <WardrobeApp
+        initialItems={items}
+        user={{
+          name: session.user.name,
+          email: session.user.email,
+          image: session.user.image,
+        }}
+      />
     </div>
   );
 }
