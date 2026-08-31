@@ -1,0 +1,33 @@
+.fab {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 480px;
+  width: calc(100% - 32px);
+  z-index: 30;
+}
+.fab button {
+  width: 100%;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 15px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  box-shadow: 0 8px 24px -6px rgba(46, 58, 82, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.fab button:active {
+  background: var(--navy-soft);
+}
+.fab button svg {
+  width: 18px;
+  height: 18px;
+}
