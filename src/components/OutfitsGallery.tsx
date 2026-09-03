@@ -7,7 +7,7 @@ import { Header } from "./Header";
 import { EmptyState } from "./EmptyState";
 import { Fab } from "./Fab";
 import { OutfitUploadSheet } from "./OutfitUploadSheet";
-import { PhotoLightbox } from "./PhotoLightbox";
+import { OutfitViewer } from "./OutfitViewer";
 import { Toast, type ToastData } from "./Toast";
 import styles from "./OutfitsGallery.module.css";
 
@@ -25,7 +25,7 @@ export function OutfitsGallery({ initialOutfits, user }: OutfitsGalleryProps) {
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadToken, setUploadToken] = useState(0);
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [toastData, setToastData] = useState<ToastData | null>(null);
 
   function showToast(message: string, onUndo?: () => void) {
@@ -64,14 +64,14 @@ export function OutfitsGallery({ initialOutfits, user }: OutfitsGalleryProps) {
           <EmptyState variant="no-outfits" />
         ) : (
           <div className={styles.grid}>
-            {outfits.map((outfit) => (
+            {outfits.map((outfit, index) => (
               <div className={styles.card} key={outfit.id}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   className={styles.photo}
                   src={outfit.photo}
                   alt="Outfit"
-                  onClick={() => setLightbox(outfit.photo)}
+                  onClick={() => setViewerIndex(index)}
                 />
                 <button
                   className={styles.delete}
@@ -95,7 +95,11 @@ export function OutfitsGallery({ initialOutfits, user }: OutfitsGalleryProps) {
         onPhotoError={(message) => showToast(message)}
       />
 
-      <PhotoLightbox src={lightbox} alt="Outfit" onClose={() => setLightbox(null)} />
+      <OutfitViewer
+        outfits={outfits}
+        startIndex={viewerIndex}
+        onClose={() => setViewerIndex(null)}
+      />
 
       <Toast data={toastData} />
     </>
