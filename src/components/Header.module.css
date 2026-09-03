@@ -12,6 +12,30 @@
   top: 14px;
   right: 20px;
 }
+.sectionNav {
+  display: flex;
+  gap: 8px;
+  margin: 0 44px 14px 0;
+}
+.sectionTab {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: #c7cdda;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  cursor: pointer;
+}
+.sectionTab.active {
+  background: #efe9da;
+  border-color: #efe9da;
+  color: var(--navy);
+}
 .totalRow {
   display: flex;
   align-items: flex-end;

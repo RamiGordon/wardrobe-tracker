@@ -99,3 +99,14 @@ export const items = pgTable("items", {
   photo: text("photo"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const outfits = pgTable("outfits", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  photo: text("photo").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

@@ -47,7 +47,7 @@ export function WardrobeApp({ initialItems, user }: WardrobeAppProps) {
   const [toastData, setToastData] = useState<ToastData | null>(null);
 
   function showToast(message: string, onUndo?: () => void) {
-    setToastData({ id: Date.now(), message, onUndo });
+    setToastData({ message, onUndo });
   }
 
   // ---------- derived state ----------
@@ -156,7 +156,10 @@ export function WardrobeApp({ initialItems, user }: WardrobeAppProps) {
 
   return (
     <>
-      <Header total={total} boughtCount={bought.length} itemCount={items.length} user={user} />
+      <Header
+        user={user}
+        wishlistSummary={{ total, boughtCount: bought.length, itemCount: items.length }}
+      />
 
       <StatusFilter
         active={activeStatusTab}

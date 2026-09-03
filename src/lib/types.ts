@@ -28,3 +28,9 @@ export interface ItemDraft {
   estPrice: number | null;
   photo: string | null;
 }
+
+export interface Outfit {
+  id: string;
+  photo: string;
+  createdAt: number;
+}

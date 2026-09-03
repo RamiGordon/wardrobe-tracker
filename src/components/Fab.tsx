@@ -1,6 +1,11 @@
 import styles from "./Fab.module.css";
 
-export function Fab({ onClick }: { onClick: () => void }) {
+interface FabProps {
+  onClick: () => void;
+  label?: string;
+}
+
+export function Fab({ onClick, label = "Agregar a la wishlist" }: FabProps) {
   return (
     <div className={styles.fab}>
       <button onClick={onClick}>
@@ -13,7 +18,7 @@ export function Fab({ onClick }: { onClick: () => void }) {
         >
           <path d="M12 5v14M5 12h14" />
         </svg>
-        Agregar a la wishlist
+        {label}
       </button>
     </div>
   );
